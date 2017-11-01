@@ -26,8 +26,6 @@ TARGET_2ND_CPU_ABI := armeabi-v7a
 TARGET_2ND_CPU_ABI2 := armeabi
 TARGET_2ND_CPU_VARIANT := cortex-a53.a57
 
-ENABLE_CPUSETS := true
-
 TARGET_NO_BOOTLOADER := true
 
 BOARD_KERNEL_BASE        := 0x00000000
@@ -37,6 +35,7 @@ BOARD_RAMDISK_OFFSET     := 0x02000000
 
 BOARD_KERNEL_CMDLINE := console=ttyHSL0,115200,n8 androidboot.hardware=bullhead boot_cpus=0-5
 BOARD_KERNEL_CMDLINE += lpm_levels.sleep_disabled=1 msm_poweroff.download_mode=0
+BOARD_KERNEL_CMDLINE += loop.max_part=7
 
 BOARD_MKBOOTIMG_ARGS := --ramdisk_offset $(BOARD_RAMDISK_OFFSET) --tags_offset $(BOARD_KERNEL_TAGS_OFFSET)
 
@@ -84,8 +83,16 @@ MAX_EGL_CACHE_SIZE := 2048*1024
 USE_OPENGL_RENDERER := true
 TARGET_USES_ION := true
 TARGET_USES_C2D_COMPOSITION := true
+TARGET_USES_GRALLOC1_ADAPTER := true
 TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
+TARGET_USES_HWC2 := true
 MAX_VIRTUAL_DISPLAY_DIMENSION := 2048
+VSYNC_EVENT_PHASE_OFFSET_NS := 2000000
+SF_VSYNC_EVENT_PHASE_OFFSET_NS := 6000000
+NUM_FRAMEBUFFER_SURFACE_BUFFERS := 3
+
+
+TARGET_AUX_OS_VARIANT_LIST := bullhead
 
 HAVE_ADRENO_SOURCE:= false
 
@@ -104,6 +111,9 @@ TARGET_USERIMAGES_USE_EXT4 := true
 BOARD_BOOTIMAGE_PARTITION_SIZE := 33554432
 BOARD_RECOVERYIMAGE_PARTITION_SIZE := 33554432
 BOARD_SYSTEMIMAGE_PARTITION_SIZE := 3221225472
+BOARD_SYSTEMIMAGE_JOURNAL_SIZE := 0
+# as of 3765008, inode usage was 3011, use 4096 to be safe
+BOARD_SYSTEMIMAGE_EXTFS_INODE_COUNT := 4096
 BOARD_USERDATAIMAGE_PARTITION_SIZE := 11649679360
 BOARD_CACHEIMAGE_PARTITION_SIZE := 100663296
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
@@ -111,8 +121,6 @@ BOARD_FLASH_BLOCK_SIZE := 131072
 
 # Build a separate vendor.img
 TARGET_COPY_OUT_VENDOR := vendor
-
-BOARD_HAL_STATIC_LIBRARIES := libdumpstate.bullhead
 
 TARGET_RECOVERY_FSTAB = device/lge/bullhead/fstab.bullhead
 
@@ -144,10 +152,21 @@ NXP_CHIP_TYPE := 2
 #Enable peripheral manager
 TARGET_PER_MGR_ENABLED := true
 
-USE_CLANG_PLATFORM_BUILD := true
-
-USE_CLANG_PLATFORM_BUILD := true
-
 TARGET_FS_CONFIG_GEN += device/lge/bullhead/config.fs
 
 -include vendor/lge/bullhead/BoardConfigVendor.mk
+
+# Testing related defines
+BOARD_PERFSETUP_SCRIPT := platform_testing/scripts/perf-setup/bullhead-setup.sh
+
+DEVICE_MANIFEST_FILE := device/lge/bullhead/manifest.xml
+DEVICE_MATRIX_FILE := device/lge/bullhead/compatibility_matrix.xml
+
+ifeq ($(TARGET_PRODUCT),aosp_bullhead_svelte)
+BOARD_KERNEL_CMDLINE += mem=1024M maxcpus=2
+MALLOC_SVELTE := true
+endif
+ifeq ($(TARGET_PRODUCT),bullhead_svelte)
+BOARD_KERNEL_CMDLINE += mem=1024M
+MALLOC_SVELTE := true
+endif

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 The Android Open-Source Project
+# Copyright (C) 2016 The Android Open-Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,8 +36,11 @@ PRODUCT_COPY_FILES += \
     device/lge/bullhead/init.bullhead.usb.rc:root/init.bullhead.usb.rc \
     device/lge/bullhead/fstab.bullhead:root/fstab.bullhead \
     device/lge/bullhead/ueventd.bullhead.rc:root/ueventd.bullhead.rc \
+    device/lge/bullhead/init.recovery.bullhead.rc:root/init.recovery.bullhead.rc \
     device/lge/bullhead/init.bullhead.ramdump.rc:root/init.bullhead.ramdump.rc \
-    device/lge/bullhead/init.bullhead.fp.rc:root/init.bullhead.fp.rc
+    device/lge/bullhead/init.bullhead.fp.rc:root/init.bullhead.fp.rc \
+    device/lge/bullhead/init.qcom.devwait.sh:system/bin/init.qcom.devwait.sh \
+    device/lge/bullhead/init.qcom.devstart.sh:system/bin/init.qcom.devstart.sh
 
 ifeq ($(TARGET_USES_CHINOOK_SENSORHUB),true)
 PRODUCT_COPY_FILES += \
@@ -76,6 +79,7 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/lge/bullhead/gpio-keys.kl:system/usr/keylayout/gpio-keys.kl \
     device/lge/bullhead/qpnp_pon.kl:system/usr/keylayout/qpnp_pon.kl \
+    device/lge/bullhead/uinput-fpc.idc:system/usr/idc/uinput-fpc.idc \
     device/lge/bullhead/uinput-fpc.kl:system/usr/keylayout/uinput-fpc.kl
 
 # for launcher layout
@@ -98,6 +102,7 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml \
     frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \
     frameworks/native/data/etc/android.hardware.wifi.direct.xml:system/etc/permissions/android.hardware.wifi.direct.xml \
+    frameworks/native/data/etc/android.hardware.wifi.passpoint.xml:system/etc/permissions/android.hardware.wifi.passpoint.xml \
     frameworks/native/data/etc/android.hardware.sensor.proximity.xml:system/etc/permissions/android.hardware.sensor.proximity.xml \
     frameworks/native/data/etc/android.hardware.sensor.light.xml:system/etc/permissions/android.hardware.sensor.light.xml \
     frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:system/etc/permissions/android.hardware.sensor.gyroscope.xml \
@@ -175,10 +180,26 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     gralloc.msm8992 \
+    android.hardware.graphics.allocator@2.0-impl \
+    android.hardware.graphics.allocator@2.0-service \
+    android.hardware.graphics.mapper@2.0-impl \
     hwcomposer.msm8992 \
     libgenlock \
     memtrack.msm8992 \
-    lights.bullhead
+    android.hardware.memtrack@1.0-impl
+
+# Light HAL
+PRODUCT_PACKAGES += \
+    lights.bullhead \
+    lights.vts \
+    android.hardware.light@2.0-impl
+
+# RenderScript HAL
+PRODUCT_PACKAGES += \
+    android.hardware.renderscript@1.0-impl
+
+PRODUCT_PACKAGES += \
+    android.hardware.drm@1.0-impl \
 
 PRODUCT_PACKAGES += \
     libc2dcolorconvert \
@@ -206,9 +227,22 @@ PRODUCT_PACKAGES += \
     libqcompostprocbundle \
     libvolumelistener
 
+# Dumpstate HAL
+PRODUCT_PACKAGES += \
+    android.hardware.dumpstate@1.0-service.bullhead
+
 PRODUCT_PACKAGES += \
     librmnetctl \
     rmnetcli
+
+PRODUCT_PACKAGES += \
+    android.hardware.audio@2.0-impl \
+    android.hardware.audio.effect@2.0-impl \
+    android.hardware.broadcastradio@1.0-impl \
+    android.hardware.soundtrigger@2.0-impl
+
+PRODUCT_PACKAGES += \
+    android.hardware.graphics.composer@2.1-impl
 
 # GPS configuration
 PRODUCT_COPY_FILES += \
@@ -216,25 +250,32 @@ PRODUCT_COPY_FILES += \
 
 # NFC packages
 PRODUCT_PACKAGES += \
-    nfc_nci.bullhead \
+    libnfc-nci \
     NfcNci \
-    Tag  \
-    android.hardware.nfc@1.0-impl
+    Tag \
+    android.hardware.nfc@1.0-impl \
+    nfc_nci.bullhead \
 
-ifeq ($(ENABLE_TREBLE), true)
+# Keymaster HAL
 PRODUCT_PACKAGES += \
-	android.hardware.nfc@1.0-service
-endif
+    android.hardware.keymaster@3.0-impl
 
-# Fingerprint Sensor
+# Vibrator HAL
 PRODUCT_PACKAGES += \
-    fingerprint.bullhead
+    android.hardware.vibrator@1.0-impl
+
+# Fingerprint HIDL implementation
+PRODUCT_PACKAGES += \
+    fingerprint.bullhead \
+    android.hardware.biometrics.fingerprint@2.1-service
 
 # Wi-Fi
 PRODUCT_PACKAGES += \
+    android.hardware.wifi@1.0-service \
     libwpa_client \
     hostapd \
     wificond \
+    wifilogd \
     wpa_supplicant \
     wpa_supplicant.conf
 
@@ -246,7 +287,9 @@ PRODUCT_PACKAGES += \
     libmmcamera_interface2 \
     libmmjpeg_interface \
     libqomx_core \
-    mm-qcamera-app
+    mm-qcamera-app \
+    android.hardware.camera.provider@2.4-impl \
+    camera.device@3.2-impl
 
 # Sensor & activity_recognition HAL
 TARGET_USES_NANOHUB_SENSORHAL := true
@@ -256,7 +299,13 @@ NANOHUB_SENSORHAL_SENSORLIST := $(LOCAL_PATH)/sensorhal/sensorlist.cpp
 PRODUCT_PACKAGES += \
     sensors.bullhead \
     activity_recognition.bullhead \
-    context_hub.default
+    context_hub.default \
+    android.hardware.sensors@1.0-impl \
+    android.hardware.contexthub@1.0-impl \
+
+# new gatekeeper HAL
+PRODUCT_PACKAGES +=                         \
+    android.hardware.gatekeeper@1.0-impl    \
 
 ifeq ($(TARGET_USES_CHINOOK_SENSORHUB),true)
 PRODUCT_PACKAGES += \
@@ -271,6 +320,13 @@ ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
 PRODUCT_PACKAGES += \
     nanotool \
     sensortest
+endif
+
+# Library used for VTS profiling (only for userdebug and eng builds)
+ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
+PRODUCT_PACKAGES += \
+    libvts_profiling \
+    libvts_multidevice_proto
 endif
 
 PRODUCT_PACKAGES += \
@@ -301,6 +357,19 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.audio.fluence.speaker=true \
     persist.speaker.prot.enable=true \
     ro.config.vc_call_vol_steps=7
+
+# Default OMX service to non-Treble
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.media.treble_omx=false
+
+# Write Manufacturer & Model information in created media files.
+# IMPORTANT: ONLY SET THIS PROPERTY TO TRUE FOR PUBLIC DEVICES
+ifneq ($(filter aosp_bullhead% bullhead%, $(TARGET_PRODUCT)),)
+PRODUCT_PROPERTY_OVERRIDES += \
+    media.recorder.show_manufacturer_and_model=true
+else
+$(error "you must decide whether to write manufacturer and model information into created media files for this device. ONLY ENABLE IT FOR PUBLIC DEVICE.")
+endif  #TARGET_PRODUCT
 
 # Reduce client buffer size for fast audio output tracks
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -349,7 +418,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # for perfd
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.min_freq_0=384000
+    ro.min_freq_0=384000 \
     ro.min_freq_4=384000
 
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -433,6 +502,11 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     ro.bt.bdaddr_path=/persist/bdaddr.txt
 
+# Bluetooth HAL
+PRODUCT_PACKAGES += \
+    libbt-vendor \
+    android.hardware.bluetooth@1.0-impl
+
 # limit dex2oat threads to improve thermals
 PRODUCT_PROPERTY_OVERRIDES += \
     dalvik.vm.boot-dex2oat-threads=4 \
@@ -455,13 +529,26 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Power HAL
 PRODUCT_PACKAGES += \
     power.bullhead \
-    thermal.bullhead
+    android.hardware.power@1.0-impl \
+
+# Thermal HAL
+PRODUCT_PACKAGES += \
+    thermal.bullhead \
+    android.hardware.thermal@1.0-impl \
+
+#GNSS HAL
+PRODUCT_PACKAGES += \
+    android.hardware.gnss@1.0-impl
+
+#USB HAL
+PRODUCT_PACKAGES += \
+    android.hardware.usb@1.0-service
 
 # Modem debugger/misc
 ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
 ifeq (,$(filter aosp_bullhead, $(TARGET_PRODUCT)))
 PRODUCT_PACKAGES += \
-    QXDMLoggerV2
+    NexusLogger
 endif # aosp_bullhead
 
 PRODUCT_COPY_FILES += \
@@ -473,6 +560,12 @@ PRODUCT_COPY_FILES += \
     device/lge/bullhead/init.bullhead.misc.rc.user:root/init.bullhead.misc.rc
 endif
 
+# Set if a device image has the VTS coverage instrumentation.
+ifeq ($(NATIVE_COVERAGE),true)
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.vts.coverage=1
+endif
+
 # setup dm-verity configs.
 PRODUCT_SYSTEM_VERITY_PARTITION := /dev/block/platform/soc.0/f9824900.sdhci/by-name/system
 PRODUCT_VENDOR_VERITY_PARTITION := /dev/block/platform/soc.0/f9824900.sdhci/by-name/vendor
@@ -481,6 +574,10 @@ $(call inherit-product, build/target/product/verity.mk)
 # OEM Unlock reporting
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     ro.oem_unlock_supported=1
+
+# ro.product.first_api_level indicates the first api level the device has commercially launched on.
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.product.first_api_level=23
 
 # In userdebug, add minidebug info the the boot image and the system server to support
 # diagnosing native crashes.
