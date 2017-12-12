@@ -13,7 +13,6 @@
             system/bin/diag_klog \
             system/bin/diag_mdlog \
             system/bin/diag_qshrink4_daemon \
-            system/bin/halutil \
             system/bin/imsdatadaemon \
             system/bin/imsqmidaemon \
             system/bin/ims_rtp_daemon \
@@ -89,9 +88,5 @@
             system/lib/libgps.utils.so \
             system/lib/libiperf.so \
             system/xbin/iperf3 \
-            system/lib64/android.hardware.biometrics.fingerprint@2.1.so \
-            system/lib64/android.hardware.configstore@1.0.so \
-            system/lib64/android.hardware.usb@1.0.so \
-            system/lib64/android.hardware.wifi@1.0.so \
             "
     ;;
